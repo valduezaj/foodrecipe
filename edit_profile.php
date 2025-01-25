@@ -8,8 +8,6 @@ if (!isset($_SESSION['username'])) {
 include 'db.php'; // Ensure database connection
 
 $username = $_SESSION['username'];
-
-// Fetch current user details
 $sql = "SELECT username, photo FROM users WHERE username = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $username);
@@ -21,21 +19,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_username = $_POST['username'];
 
     // Handle profile photo upload
-    $photo = $user['photo'];
+    $photo = $user['photo']; // Default to existing photo
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
         $target_dir = "uploads/";
-        $photo = $target_dir . basename($_FILES['photo']['name']);
-        move_uploaded_file($_FILES['photo']['tmp_name'], $photo);
+        $target_file = $target_dir . basename($_FILES['photo']['name']);
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Validate file type
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        if (in_array($imageFileType, $allowed_types)) {
+            if (move_uploaded_file($_FILES['photo']['tmp_name'], $target_file)) {
+                $photo = $target_file; // Update photo path
+            } else {
+                echo "Error uploading the file.";
+            }
+        } else {
+            echo "Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed.";
+        }
     }
 
-    // Update user details
+    // Update user details in the database
     $sql = "UPDATE users SET username = ?, photo = ? WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sss", $new_username, $photo, $username);
     if ($stmt->execute()) {
-        $_SESSION['username'] = $new_username; // Update session username
+        // Update session username if successful
+        $_SESSION['username'] = $new_username;
         header("Location: view_profile.php");
         exit;
+    } else {
+        echo "Error updating profile: " . $stmt->error;
     }
 }
 

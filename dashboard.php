@@ -200,7 +200,14 @@ $profile_photo = !empty($user['photo']) ? "uploads/" . $user['photo'] : "uploads
 
     <!-- Profile Section -->
     <div class="profile-section">
-        <img src="<?php echo htmlspecialchars($profile_photo); ?>" alt="Profile Picture">
+    <?php
+ // Assume $profile_photo is fetched from the database
+ $profile_photo = $user['photo'] ?? ''; // Leave empty if no photo is available
+ ?>
+ <?php if (!empty($profile_photo)) : ?>
+     <img src=" <?php echo htmlspecialchars($profile_photo); ?>" alt="Profile Picture">
+ <?php endif; ?>
+ 
         <h3><?php echo htmlspecialchars($username); ?></h3>
         <p>Role: <?php echo $role == 0 ? "Admin" : "User"; ?></p>
 
